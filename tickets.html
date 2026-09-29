@@ -1,0 +1,19 @@
+<!DOCTYPE html><html lang="en" data-bs-theme="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070608"><meta name="description" content="Velvet Reel - a luxury cinema experience. Discover films, save your watchlist and book your seats."><title>My tickets | Velvet Reel</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23070608'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E"><link href="css/style.css" rel="stylesheet"></head><body class="inner"><div id="nav"></div>
+
+<section class="phead"><div class="container"><span class="eyebrow rv">Your bookings</span><h1 class="rv">My tickets</h1><p class="mu" id="sum"></p></div></section>
+<section class="sec pt-3"><div class="container"><div class="row g-4" id="tl"></div></div></section>
+<div id="foot"></div><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="js/config.js"></script><script src="js/data.js"></script><script src="js/main.js"></script><script>
+
+function fd(d){return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}
+function render(){
+  const u=U();
+  if(!u){$('#sum').textContent='Sign in to see your tickets.';$('#tl').innerHTML='<div class="empty"><i class="bi bi-ticket-perforated fs-1"></i><h3 class="mt-3">You are not signed in</h3><a class="btn btn-gold mt-2" href="login.html?next=tickets.html">Sign in</a></div>';return}
+  const a=TK().filter(t=>t.user==u.email);
+  $('#sum').textContent=a.length?a.length+' booking'+(a.length>1?'s':'')+' \u00b7 '+money(a.reduce((s,t)=>s+t.total,0))+' in total':'Book a movie and your tickets will appear here.';
+  $('#tl').innerHTML=a.length?a.map(t=>{const m=M.find(x=>x.id==t.mid);if(!m)return'';return`<div class="col-12 col-xl-6 rv"><div class="tkt"><div>${pic(m,'p','')}</div><div class="mid"><small>Now showing</small><h3 class="mb-2">${esc(m.n)}</h3><div class="row g-2 mb-3"><div class="col-6"><small>Date</small>${fd(t.date)}</div><div class="col-6"><small>Time</small>${t.time}</div><div class="col-6"><small>Seats</small>${t.seats.join(', ')}</div><div class="col-6"><small>Paid</small>${money(t.total)}</div></div><button class="btn btn-line btn-sm" data-c="${t.id}"><i class="bi bi-x-circle"></i> Cancel booking</button></div><div class="stub">${barcode(t.id)}<b style="letter-spacing:.2em">${t.id}</b><small>Admit ${t.seats.length}</small></div></div></div>`}).join(''):'<div class="empty"><i class="bi bi-ticket-perforated fs-1"></i><h3 class="mt-3">No tickets yet</h3><a class="btn btn-gold mt-2" href="movies.html">Find a movie</a></div>';
+  reveal();
+}
+$('#tl').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;if(!confirm('Cancel this booking?'))return;const id=b.dataset.c,t=TK().find(x=>x.id==id);if(!t)return;LS.set('vr_tickets',TK().filter(x=>x.id!=id));const bk=LS.get('vr_booked',{}),k=[t.mid,t.date,t.time].join('|');if(bk[k]){bk[k]=bk[k].filter(s=>!t.seats.includes(s));LS.set('vr_booked',bk)}toast('Booking cancelled');updBadge();render()};
+render();
+
+</script></body></html>

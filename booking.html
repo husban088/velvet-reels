@@ -1,0 +1,50 @@
+<!DOCTYPE html><html lang="en" data-bs-theme="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070608"><meta name="description" content="Velvet Reel - a luxury cinema experience. Discover films, save your watchlist and book your seats."><title>Book tickets | Velvet Reel</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23070608'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E"><link href="css/style.css" rel="stylesheet"></head><body class="inner"><div id="nav"></div>
+
+<section class="phead"><div class="container"><span class="eyebrow">Select your seats</span><h1 id="bt" style="font-size:clamp(2rem,5vw,3.4rem)"></h1><p class="mu" id="bm"></p></div></section>
+<section class="sec pt-3"><div class="container"><div class="row g-4"><div class="col-lg-8"><div class="box mb-4"><h5>Date</h5><div class="d-flex flex-wrap gap-2 mb-4" id="dates"></div><h5>Showtime</h5><div class="d-flex flex-wrap gap-2" id="times"></div></div><div class="box"><div class="screen">S C R E E N</div><div class="seats" id="seats"></div><div class="lg mt-3" id="lgd"></div></div></div>
+<div class="col-lg-4"><div class="box" style="position:sticky;top:96px"><div class="d-flex gap-3 mb-3 align-items-center" id="mini"></div><div id="ss"></div><div class="d-flex justify-content-between align-items-center mt-3"><span class="mu">Total</span><span class="total" id="tot"></span></div><button class="btn btn-gold w-100 mt-3" id="cf" disabled><i class="bi bi-check2-circle"></i> Confirm booking</button><p class="mu small text-center mt-3 mb-0">Demo booking. No payment is taken.</p></div></div></div></div></section>
+<div id="foot"></div><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="js/config.js"></script><script src="js/data.js"></script><script src="js/main.js"></script><script>
+
+(function(){
+const m=M.find(x=>x.id==new URLSearchParams(location.search).get('id'))||M[0],u=U();
+if(!u){location.replace('login.html?next='+encodeURIComponent('booking.html?id='+m.id));return}
+document.title='Book '+m.n+' | '+BN;
+const ROWS='ABCDEFGH'.split(''),COLS=12,tier=r=>'AB'.includes(r)?'Silver':'CDEF'.includes(r)?'Gold':'Platinum',price=r=>C.PRICES[tier(r)];
+const TM=['12:30 PM','3:45 PM','7:00 PM','10:15 PM'],pad=n=>String(n).padStart(2,'0'),key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const DS=[...Array(5)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()+i);return{k:key(d),wd:d.toLocaleDateString('en-US',{weekday:'short'}),dn:d.getDate(),mo:d.toLocaleDateString('en-US',{month:'short'})}});
+const mins=t=>{const p=t.split(':');let h=(+p[0])%12;if(/PM/.test(t))h+=12;return h*60+(+p[1].slice(0,2))};
+const now=new Date(),nowM=now.getHours()*60+now.getMinutes(),past=(d,t)=>d==DS[0].k&&mins(t)<=nowM;
+let date=DS[0].k,time=TM.find(t=>!past(date,t))||null,sel=new Set();
+if(!time){date=DS[1].k;time=TM[0]}
+const BK=()=>LS.get('vr_booked',{}),hs=k=>[...k].reduce((a,c)=>a*31+c.charCodeAt(0)|0,11);
+const ord=a=>[...a].sort((x,y)=>x[0].localeCompare(y[0])||(+x.slice(1))-(+y.slice(1)));
+function taken(){const k=[m.id,date,time].join('|'),R=rng(hs(k)),s=new Set(BK()[k]||[]);ROWS.forEach(r=>{for(let c=1;c<=COLS;c++){if(R()<(tier(r)=='Platinum'?.34:.24))s.add(r+c)}});return s}
+$('#bt').textContent=m.n;$('#bm').textContent=m.g+' \u00b7 '+hm(m.rt)+' \u00b7 '+m.c+' \u00b7 '+m.lang;
+$('#lgd').innerHTML=['Silver','Gold','Platinum'].map(t=>`<span class="s-${t}"><i></i>${t} ${money(C.PRICES[t])}</span>`).join('')+'<span><i style="background:rgba(255,255,255,.1);border-color:transparent"></i>Taken</span><span><i style="background:var(--gg);border-color:transparent"></i>Selected</span>';
+function render(){
+  $('#dates').innerHTML=DS.map(d=>`<button class="dpill ${d.k==date?'on':''}" data-d="${d.k}"><small>${d.wd}</small><b>${d.dn}</b><small>${d.mo}</small></button>`).join('');
+  $('#times').innerHTML=TM.map(t=>`<button class="tpill ${t==time?'on':''}" data-t="${t}" ${past(date,t)?'disabled style="opacity:.35;pointer-events:none"':''}>${t}</button>`).join('');
+  const tk=taken();sel=new Set([...sel].filter(s=>!tk.has(s)));
+  $('#seats').innerHTML=ROWS.map(r=>`<div class="srow"><span class="rl">${r}</span>${Array.from({length:COLS},(_,i)=>{const id=r+(i+1);return(i==COLS/2?'<span class="aisle"></span>':'')+`<button class="seat s-${tier(r)} ${tk.has(id)?'taken':''} ${sel.has(id)?'sel':''}" data-s="${id}" ${tk.has(id)?'disabled':''} aria-label="Seat ${id}, ${tier(r)}">${i+1}</button>`}).join('')}<span class="rl">${r}</span></div>`).join('');
+  sum();
+}
+function sum(){
+  const a=ord(sel),tot=a.reduce((s,x)=>s+price(x[0]),0),d=DS.find(x=>x.k==date);
+  $('#mini').innerHTML=`<div style="width:64px;flex:none">${pic(m,'p','w-100 rounded-3')}</div><div><b class="d-block">${esc(m.n)}</b><small class="mu">${d.wd} ${d.dn} ${d.mo} &middot; ${time}</small></div>`;
+  $('#ss').innerHTML=a.length?a.map(x=>`<div class="sumline"><span>Seat ${x} <small class="mu">${tier(x[0])}</small></span><b>${money(price(x[0]))}</b></div>`).join(''):'<p class="mu m-0">Tap seats on the map to select them.</p>';
+  $('#tot').textContent=money(tot);$('#cf').disabled=!a.length;hydrate($('#mini'));
+}
+$('#dates').onclick=e=>{const b=e.target.closest('[data-d]');if(!b)return;date=b.dataset.d;if(past(date,time))time=TM.find(t=>!past(date,t));sel.clear();render()};
+$('#times').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;time=b.dataset.t;sel.clear();render()};
+$('#seats').onclick=e=>{const b=e.target.closest('.seat');if(!b||b.disabled)return;const s=b.dataset.s;if(sel.has(s))sel.delete(s);else{if(sel.size>=8){toast('You can book up to 8 seats at once');return}sel.add(s)}b.classList.toggle('sel');sum()};
+$('#cf').onclick=()=>{
+  const a=ord(sel);if(!a.length)return;const tk=taken();
+  if(a.some(s=>tk.has(s))){toast('Some seats were just taken');render();return}
+  const t={id:'VR-'+Math.random().toString(36).slice(2,8).toUpperCase(),mid:m.id,date,time,seats:a,total:a.reduce((s,x)=>s+price(x[0]),0),user:u.email,at:Date.now()};
+  LS.set('vr_tickets',[t,...TK()]);const b=BK(),k=[m.id,date,time].join('|');b[k]=[...(b[k]||[]),...a];LS.set('vr_booked',b);
+  toast('Booking confirmed!');setTimeout(()=>location.href='tickets.html',900);
+};
+render();reveal();
+})();
+
+</script></body></html>
